@@ -26,16 +26,20 @@ from launch.substitutions import LaunchConfiguration
 
 def launch_setup(context, *args, **kwargs):
     robot_model = LaunchConfiguration("robot_model")
+    robot_urdf_folder = LaunchConfiguration("robot_urdf_folder")    
+    robot_urdf_filepath = LaunchConfiguration("robot_urdf_filepath")    
+    robot_srdf_folder = LaunchConfiguration("robot_srdf_folder")        
+    robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")     
 
     moveit_config = (
         MoveItConfigsBuilder("kuka_lbr_iisy")
         .robot_description(
-            file_path=get_package_share_directory("kuka_lbr_iisy_support")
-            + f"/urdf/{robot_model.perform(context)}.urdf.xacro"
+            file_path=get_package_share_directory(robot_urdf_folder.perform(context))
+            + robot_urdf_filepath.perform(context)
         )
         .robot_description_semantic(
-            get_package_share_directory("kuka_lbr_iisy_moveit_config")
-            + f"/urdf/{robot_model.perform(context)}.srdf"
+            get_package_share_directory(robot_srdf_folder.perform(context))
+            + robot_srdf_filepath.perform(context)
         )
         .robot_description_kinematics(file_path="config/kinematics.yaml")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
@@ -77,4 +81,8 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     launch_arguments = []
     launch_arguments.append(DeclareLaunchArgument("robot_model", default_value="lbr_iisy3_r760"))
+    launch_arguments.append(DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support"))
+    launch_arguments.append(DeclareLaunchArgument("robot_urdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.urdf.xacro"))
+    launch_arguments.append(DeclareLaunchArgument("robot_srdf_folder", default_value="kuka_lbr_iisy_moveit_config"))
+    launch_arguments.append(DeclareLaunchArgument("robot_srdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.srdf"))
     return LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
