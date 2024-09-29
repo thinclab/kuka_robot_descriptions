@@ -12,20 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import yaml
+import os
+
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
+import launch_ros.descriptions
 
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
+
+def load_yaml(package_name, file_path):
+    package_path = get_package_share_directory(package_name)
+    absolute_file_path = os.path.join(package_path, file_path)
+
+    try:
+        with open(absolute_file_path) as file:
+            return yaml.safe_load(file)
+    except OSError:  # parent of IOError, OSError *and* WindowsError where available
+        return None
 
 
 def launch_setup(context, *args, **kwargs):
     robot_model = LaunchConfiguration("robot_model")
     robot_family = LaunchConfiguration("robot_family")
     dof = LaunchConfiguration("dof")
+    robot_urdf_folder = LaunchConfiguration("robot_urdf_folder")    
+    robot_urdf_filepath = LaunchConfiguration("robot_urdf_filepath")    
+    robot_srdf_folder = LaunchConfiguration("robot_srdf_folder")        
+    robot_kinematics_folder = LaunchConfiguration("robot_kinematics_folder")        
+    robot_ompl_folder = LaunchConfiguration("robot_ompl_folder")        
+    robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")  
 
     rviz_config_file = (
         get_package_share_directory("kuka_resources")
@@ -39,9 +59,9 @@ def launch_setup(context, *args, **kwargs):
             " ",
             PathJoinSubstitution(
                 [
-                    FindPackageShare(f"kuka_{robot_family.perform(context)}_support"),
-                    "urdf",
-                    robot_model.perform(context) + ".urdf.xacro",
+                    FindPackageShare(robot_urdf_folder.perform(context)),
+                    robot_urdf_filepath.perform(context).split("/")[1],
+                    robot_urdf_filepath.perform(context).split("/")[2],
                 ]
             ),
             " ",
@@ -49,6 +69,38 @@ def launch_setup(context, *args, **kwargs):
             "true",
         ]
     )
+    
+    # MoveIt Configuration
+    robot_description_semantic_content = Command(
+        [
+            PathJoinSubstitution([FindExecutable(name="xacro")]),
+            " ",
+            PathJoinSubstitution(
+                [FindPackageShare(robot_srdf_folder.perform(context)), robot_srdf_filepath.perform(context).split("/")[1], robot_srdf_filepath.perform(context).split("/")[2],]
+            ),
+            " ",
+            "name:=",
+            robot_model.perform(context),
+            " ",
+            "prefix:=",
+            " ",
+        ]
+    )
+    robot_description_semantic = {"robot_description_semantic": launch_ros.descriptions.ParameterValue(robot_description_semantic_content, value_type=str)}
+
+    # Load kinematics yaml
+    kinematics_yaml = load_yaml(robot_kinematics_folder.perform(context), "config/kinematics.yaml")
+    robot_description_kinematics = {"robot_description_kinematics": kinematics_yaml}
+
+
+    # robot_description_planning = {
+    #     "robot_description_planning": PathJoinSubstitution(
+    #         [FindPackageShare(f"kuka_{robot_family.perform(context)}_support"),
+    #         "config",
+    #         f"{robot_model.perform(context)}_joint_limits.yaml"
+    #         ]
+    #     )
+    # }
 
     robot_description = {"robot_description": robot_description_content}
 
@@ -64,6 +116,21 @@ def launch_setup(context, *args, **kwargs):
         executable="ros2_control_node",
         parameters=[robot_description, controller_config],
     )
+    
+    
+    # Planning Configuration
+    ompl_planning_pipeline_config = {
+        "move_group": {
+            "planning_plugin": "ompl_interface/OMPLPlanner",
+            "request_adapters": """default_planner_request_adapters/AddTimeOptimalParameterization default_planner_request_adapters/FixWorkspaceBounds default_planner_request_adapters/FixStartStateBounds default_planner_request_adapters/FixStartStateCollision default_planner_request_adapters/FixStartStatePathConstraints""",
+            "start_state_max_bounds_error": 0.1,
+        }
+    }
+
+    ompl_planning_yaml = load_yaml(
+        robot_ompl_folder.perform(context), "config/ompl_planning.yaml"
+    )
+    ompl_planning_pipeline_config["move_group"].update(ompl_planning_yaml)
 
     rviz = Node(
         package="rviz2",
@@ -71,6 +138,13 @@ def launch_setup(context, *args, **kwargs):
         name="rviz2",
         output="log",
         arguments=["-d", rviz_config_file, "--ros-args", "--log-level", "error"],
+        parameters=[
+            robot_description,
+            robot_description_semantic,
+            # robot_description_planning,
+            ompl_planning_pipeline_config,
+            robot_description_kinematics,
+        ],
     )
 
     robot_state_publisher = Node(
@@ -108,6 +182,12 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     launch_arguments = []
     launch_arguments.append(DeclareLaunchArgument("robot_model", default_value=""))
-    launch_arguments.append(DeclareLaunchArgument("robot_family", default_value=""))
+    launch_arguments.append(DeclareLaunchArgument("robot_family", default_value="lbr_iisy"))
     launch_arguments.append(DeclareLaunchArgument("dof", default_value="6"))
+    launch_arguments.append(DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support"))
+    launch_arguments.append(DeclareLaunchArgument("robot_urdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.urdf.xacro"))
+    launch_arguments.append(DeclareLaunchArgument("robot_srdf_folder", default_value="kuka_lbr_iisy_moveit_config"))
+    launch_arguments.append(DeclareLaunchArgument("robot_kinematics_folder", default_value="kuka_lbr_iisy_moveit_config"))
+    launch_arguments.append(DeclareLaunchArgument("robot_ompl_folder", default_value="kuka_lbr_iisy_moveit_config"))
+    launch_arguments.append(DeclareLaunchArgument("robot_srdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.srdf"))
     return LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])

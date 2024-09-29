@@ -143,6 +143,7 @@ planner_configs:
 
 manipulator:
   enforce_constrained_state_space: true
+  enforce_joint_model_state_space: true
   projection_evaluator: joints(joint_1,joint_2)
   planner_configs:
     - APSConfigDefault
@@ -170,3 +171,4 @@ manipulator:
     - SPARSkConfigDefault
     - SPARStwokConfigDefault
     - TrajOptDefault
+

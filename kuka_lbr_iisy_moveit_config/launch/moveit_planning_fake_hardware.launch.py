@@ -29,6 +29,8 @@ def launch_setup(context, *args, **kwargs):
     robot_urdf_folder = LaunchConfiguration("robot_urdf_folder")    
     robot_urdf_filepath = LaunchConfiguration("robot_urdf_filepath")    
     robot_srdf_folder = LaunchConfiguration("robot_srdf_folder")        
+    robot_kinematics_folder = LaunchConfiguration("robot_kinematics_folder")        
+    robot_ompl_folder = LaunchConfiguration("robot_ompl_folder")        
     robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")     
 
     moveit_config = (
@@ -41,8 +43,8 @@ def launch_setup(context, *args, **kwargs):
             get_package_share_directory(robot_srdf_folder.perform(context))
             + robot_srdf_filepath.perform(context)
         )
-        .robot_description_kinematics(file_path="config/kinematics.yaml")
-        .trajectory_execution(file_path="config/moveit_controllers.yaml")
+        .robot_description_kinematics(file_path=f"{get_package_share_directory(robot_kinematics_folder.perform(context))}/config/kinematics.yaml")
+        .trajectory_execution(file_path=f"{get_package_share_directory(robot_kinematics_folder.perform(context))}/config/moveit_controllers.yaml")
         .planning_scene_monitor(
             publish_robot_description=True, publish_robot_description_semantic=True
         )
@@ -69,7 +71,14 @@ def launch_setup(context, *args, **kwargs):
         ),
         launch_arguments={
             "robot_family": "{}".format("lbr_iisy"),
+            "robot_model": "{}".format(robot_model.perform(context)),
             "dof": f"{6}",
+            "robot_urdf_folder": f"{robot_urdf_folder.perform(context)}",
+            "robot_srdf_folder": f"{robot_srdf_folder.perform(context)}",
+            "robot_urdf_filepath": f"{robot_urdf_filepath.perform(context)}",
+            "robot_srdf_filepath": f"{robot_srdf_filepath.perform(context)}",           
+            "robot_kinematics_folder": f"{robot_kinematics_folder.perform(context)}",
+            "robot_ompl_folder": f"{robot_ompl_folder.perform(context)}",
         }.items(),
     )
 
@@ -84,5 +93,7 @@ def generate_launch_description():
     launch_arguments.append(DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support"))
     launch_arguments.append(DeclareLaunchArgument("robot_urdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.urdf.xacro"))
     launch_arguments.append(DeclareLaunchArgument("robot_srdf_folder", default_value="kuka_lbr_iisy_moveit_config"))
+    launch_arguments.append(DeclareLaunchArgument("robot_kinematics_folder", default_value="kuka_lbr_iisy_moveit_config"))
+    launch_arguments.append(DeclareLaunchArgument("robot_ompl_folder", default_value="kuka_lbr_iisy_moveit_config"))
     launch_arguments.append(DeclareLaunchArgument("robot_srdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.srdf"))
     return LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
