@@ -1,4 +1,4 @@
-# Copyright 2022 Áron Svastits
+# Copyright 2022 Aron Svastits
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import yaml
 import os
+import yaml
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
@@ -35,7 +35,6 @@ def load_yaml(package_name, file_path):
     except OSError:  # parent of IOError, OSError *and* WindowsError where available
         return None
 
-
 def launch_setup(context, *args, **kwargs):
     robot_model = LaunchConfiguration("robot_model")
     robot_family = LaunchConfiguration("robot_family")
@@ -45,7 +44,8 @@ def launch_setup(context, *args, **kwargs):
     robot_srdf_folder = LaunchConfiguration("robot_srdf_folder")        
     robot_kinematics_folder = LaunchConfiguration("robot_kinematics_folder")        
     robot_ompl_folder = LaunchConfiguration("robot_ompl_folder")        
-    robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")  
+    robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")
+    roundtrip_time = LaunchConfiguration('roundtrip_time')
 
     rviz_config_file = (
         get_package_share_directory("kuka_resources")
@@ -69,8 +69,7 @@ def launch_setup(context, *args, **kwargs):
             "true",
         ]
     )
-    
-    # MoveIt Configuration
+
     robot_description_semantic_content = Command(
         [
             PathJoinSubstitution([FindExecutable(name="xacro")]),
@@ -87,21 +86,11 @@ def launch_setup(context, *args, **kwargs):
         ]
     )
     robot_description_semantic = {"robot_description_semantic": launch_ros.descriptions.ParameterValue(robot_description_semantic_content, value_type=str)}
-
+    
     # Load kinematics yaml
     kinematics_yaml = load_yaml(robot_kinematics_folder.perform(context), "config/kinematics.yaml")
     robot_description_kinematics = {"robot_description_kinematics": kinematics_yaml}
-
-
-    # robot_description_planning = {
-    #     "robot_description_planning": PathJoinSubstitution(
-    #         [FindPackageShare(f"kuka_{robot_family.perform(context)}_support"),
-    #         "config",
-    #         f"{robot_model.perform(context)}_joint_limits.yaml"
-    #         ]
-    #     )
-    # }
-
+    
     robot_description = {"robot_description": robot_description_content}
 
     controller_config = (
@@ -116,8 +105,7 @@ def launch_setup(context, *args, **kwargs):
         executable="ros2_control_node",
         parameters=[robot_description, controller_config],
     )
-    
-    
+
     # Planning Configuration
     ompl_planning_pipeline_config = {
         "move_group": {
@@ -156,17 +144,14 @@ def launch_setup(context, *args, **kwargs):
 
     # Spawn controllers
     def controller_spawner(controller_with_config):
-        arg_list = [
-            controller_with_config[0],
-            "-c",
-            controller_manager_node,
-            "-p",
-            controller_with_config[1],
-        ]
+        arg_list = [controller_with_config[0], "-c", controller_manager_node]
+        if controller_with_config[1] is not None:
+            arg_list.append("-p")
+            arg_list.append(controller_with_config[1])
         return Node(package="controller_manager", executable="spawner", arguments=arg_list)
 
     controller_names_and_config = [
-        ("joint_state_broadcaster", []),
+        ("joint_state_broadcaster", None),
         ("joint_trajectory_controller", controller_config),
     ]
 
@@ -182,7 +167,7 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     launch_arguments = []
     launch_arguments.append(DeclareLaunchArgument("robot_model", default_value=""))
-    launch_arguments.append(DeclareLaunchArgument("robot_family", default_value="lbr_iisy"))
+    launch_arguments.append(DeclareLaunchArgument("robot_family", default_value=""))
     launch_arguments.append(DeclareLaunchArgument("dof", default_value="6"))
     launch_arguments.append(DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support"))
     launch_arguments.append(DeclareLaunchArgument("robot_urdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.urdf.xacro"))
@@ -190,4 +175,5 @@ def generate_launch_description():
     launch_arguments.append(DeclareLaunchArgument("robot_kinematics_folder", default_value="kuka_lbr_iisy_moveit_config"))
     launch_arguments.append(DeclareLaunchArgument("robot_ompl_folder", default_value="kuka_lbr_iisy_moveit_config"))
     launch_arguments.append(DeclareLaunchArgument("robot_srdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.srdf"))
+    launch_arguments.append(DeclareLaunchArgument('roundtrip_time', default_value='0'))
     return LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])

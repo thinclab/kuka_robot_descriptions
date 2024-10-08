@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import yaml
+
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
@@ -23,6 +26,15 @@ from launch.launch_description_sources.python_launch_description_source import (
 )
 from launch.substitutions import LaunchConfiguration
 
+def load_yaml(package_name, file_path):
+    package_path = get_package_share_directory(package_name)
+    absolute_file_path = os.path.join(package_path, file_path)
+
+    try:
+        with open(absolute_file_path) as file:
+            return yaml.safe_load(file)
+    except OSError:  # parent of IOError, OSError *and* WindowsError where available
+        return None
 
 def launch_setup(context, *args, **kwargs):
     robot_model = LaunchConfiguration("robot_model")
@@ -31,7 +43,7 @@ def launch_setup(context, *args, **kwargs):
     robot_srdf_folder = LaunchConfiguration("robot_srdf_folder")        
     robot_kinematics_folder = LaunchConfiguration("robot_kinematics_folder")        
     robot_ompl_folder = LaunchConfiguration("robot_ompl_folder")        
-    robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")     
+    robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")
 
     moveit_config = (
         MoveItConfigsBuilder("kuka_lbr_iisy")
@@ -52,8 +64,24 @@ def launch_setup(context, *args, **kwargs):
             file_path=get_package_share_directory("kuka_lbr_iisy_support")
             + f"/config/{robot_model.perform(context)}_joint_limits.yaml"
         )
+        .planning_scene_monitor(
+            publish_robot_description=True, publish_robot_description_semantic=True
+        )
+        .planning_pipelines("ompl", ["ompl"])
         .to_moveit_configs()
     )
+
+    # Planning Configuration
+    ompl_planning_pipeline_config = {
+        "move_group": {
+            "request_adapters": """default_planner_request_adapters/AddTimeOptimalParameterization default_planner_request_adapters/FixWorkspaceBounds default_planner_request_adapters/FixStartStateBounds default_planner_request_adapters/FixStartStateCollision default_planner_request_adapters/FixStartStatePathConstraints""",
+        }
+    }
+
+    ompl_planning_yaml = load_yaml(
+        robot_ompl_folder.perform(context), "config/ompl_planning.yaml"
+    )
+    ompl_planning_pipeline_config["move_group"].update(ompl_planning_yaml)
 
     move_group_server = Node(
         package="moveit_ros_move_group",
@@ -71,7 +99,6 @@ def launch_setup(context, *args, **kwargs):
         ),
         launch_arguments={
             "robot_family": "{}".format("lbr_iisy"),
-            "robot_model": "{}".format(robot_model.perform(context)),
             "dof": f"{6}",
             "robot_urdf_folder": f"{robot_urdf_folder.perform(context)}",
             "robot_srdf_folder": f"{robot_srdf_folder.perform(context)}",

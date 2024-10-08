@@ -753,7 +753,7 @@ return_type KukaMockHardwareInterface::write(const rclcpp::Time & time, const rc
       time.nanoseconds() >
       next_iteration_time_.time_since_epoch().count() + roundtrip_time_micro_ * 1000)
     {
-      // RCUTILS_LOG_WARN_NAMED("mock_generic_system", "Cycle exceeded allowed round-trip time");
+      RCUTILS_LOG_WARN_NAMED("mock_generic_system", "Cycle exceeded allowed round-trip time");
     }
   }
   return return_type::OK;

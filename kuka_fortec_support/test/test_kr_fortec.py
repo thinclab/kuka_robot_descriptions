@@ -1,4 +1,4 @@
-# Copyright 2024 Áron Svastits
+# Copyright 2024 Aron Svastits
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,7 +60,5 @@ def generate_test_description(test_file):
 
 class TestModels(unittest.TestCase):
     def test_read_stdout(self, proc_output):
-        # Check for frames defined by ROS-Industrial
-        proc_output.assertWaitFor("got segment base", timeout=5)
-        proc_output.assertWaitFor("got segment flange", timeout=5)
-        proc_output.assertWaitFor("got segment tool0", timeout=5)
+        # Check for robot initialization
+        proc_output.assertWaitFor("Robot initialized", timeout=5)
