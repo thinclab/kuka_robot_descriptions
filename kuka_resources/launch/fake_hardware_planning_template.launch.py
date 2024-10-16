@@ -45,7 +45,6 @@ def launch_setup(context, *args, **kwargs):
     robot_kinematics_folder = LaunchConfiguration("robot_kinematics_folder")        
     robot_ompl_folder = LaunchConfiguration("robot_ompl_folder")        
     robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")
-    roundtrip_time = LaunchConfiguration('roundtrip_time')
 
     rviz_config_file = (
         get_package_share_directory("kuka_resources")
@@ -175,5 +174,4 @@ def generate_launch_description():
     launch_arguments.append(DeclareLaunchArgument("robot_kinematics_folder", default_value="kuka_lbr_iisy_moveit_config"))
     launch_arguments.append(DeclareLaunchArgument("robot_ompl_folder", default_value="kuka_lbr_iisy_moveit_config"))
     launch_arguments.append(DeclareLaunchArgument("robot_srdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.srdf"))
-    launch_arguments.append(DeclareLaunchArgument('roundtrip_time', default_value='0'))
     return LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
