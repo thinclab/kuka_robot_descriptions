@@ -49,7 +49,8 @@ def launch_setup(context, *args, **kwargs):
         MoveItConfigsBuilder("kuka_lbr_iisy")
         .robot_description(
             file_path=get_package_share_directory(robot_urdf_folder.perform(context))
-            + robot_urdf_filepath.perform(context)
+            + robot_urdf_filepath.perform(context),
+            mappings={"use_fake_hardware": "true",},
         )
         .robot_description_semantic(
             get_package_share_directory(robot_srdf_folder.perform(context))
@@ -64,10 +65,6 @@ def launch_setup(context, *args, **kwargs):
             file_path=get_package_share_directory("kuka_lbr_iisy_support")
             + f"/config/{robot_model.perform(context)}_joint_limits.yaml"
         )
-        .planning_scene_monitor(
-            publish_robot_description=True, publish_robot_description_semantic=True
-        )
-        .planning_pipelines("ompl", ["ompl"])
         .to_moveit_configs()
     )
 

@@ -105,20 +105,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[robot_description, controller_config],
     )
 
-    # Planning Configuration
-    ompl_planning_pipeline_config = {
-        "move_group": {
-            "planning_plugin": "ompl_interface/OMPLPlanner",
-            "request_adapters": """default_planner_request_adapters/AddTimeOptimalParameterization default_planner_request_adapters/FixWorkspaceBounds default_planner_request_adapters/FixStartStateBounds default_planner_request_adapters/FixStartStateCollision default_planner_request_adapters/FixStartStatePathConstraints""",
-            "start_state_max_bounds_error": 0.1,
-        }
-    }
-
-    ompl_planning_yaml = load_yaml(
-        robot_ompl_folder.perform(context), "config/ompl_planning.yaml"
-    )
-    ompl_planning_pipeline_config["move_group"].update(ompl_planning_yaml)
-
     rviz = Node(
         package="rviz2",
         executable="rviz2",
@@ -128,8 +114,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             robot_description,
             robot_description_semantic,
-            # robot_description_planning,
-            ompl_planning_pipeline_config,
             robot_description_kinematics,
         ],
     )

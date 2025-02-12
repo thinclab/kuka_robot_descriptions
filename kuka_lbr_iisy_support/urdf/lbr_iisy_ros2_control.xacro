@@ -49,7 +49,12 @@
         <command_interface name="damping"/>
         <command_interface name="effort"/>
         <state_interface name="position">
-          <param name="initial_value">-1.5708</param>
+          <xacro:if value="${use_fake_hardware}">
+            <param name="initial_value">0.0</param>
+          </xacro:if>
+          <xacro:unless value="${use_fake_hardware}">
+            <param name="initial_value">-1.5708</param>
+          </xacro:unless>
         </state_interface>
         <state_interface name="effort">
           <param name="initial_value">0.0</param>
@@ -61,7 +66,12 @@
         <command_interface name="damping"/>
         <command_interface name="effort"/>
         <state_interface name="position">
-          <param name="initial_value">1.5708</param>
+          <xacro:if value="${use_fake_hardware}">
+            <param name="initial_value">0.0</param>
+          </xacro:if>
+          <xacro:unless value="${use_fake_hardware}">
+            <param name="initial_value">1.5708</param>
+          </xacro:unless>
         </state_interface>
         <state_interface name="effort">
           <param name="initial_value">0.0</param>
