@@ -1,3 +1,5 @@
+## For installation instructions of this fork, see the [kuka_irl_project](https://github.com/thinclab/kuka_irl_project/tree/jazzy?tab=readme-ov-file#3-clone-this-package-into-your-ros2-workspace) repository
+
 # kuka_robot_descriptions
 
 This repository contains support packages that can be used with real KUKA robots as well as with simulations.
