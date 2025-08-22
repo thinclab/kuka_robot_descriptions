@@ -12,39 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import yaml
-
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
-import launch_ros.descriptions
 
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
-def load_yaml(package_name, file_path):
-    package_path = get_package_share_directory(package_name)
-    absolute_file_path = os.path.join(package_path, file_path)
-
-    try:
-        with open(absolute_file_path) as file:
-            return yaml.safe_load(file)
-    except OSError:  # parent of IOError, OSError *and* WindowsError where available
-        return None
 
 def launch_setup(context, *args, **kwargs):
-    robot_model = LaunchConfiguration("robot_model")
-    robot_family = LaunchConfiguration("robot_family")
-    dof = LaunchConfiguration("dof")
-    robot_urdf_folder = LaunchConfiguration("robot_urdf_folder")    
+    robot_urdf_folder = LaunchConfiguration("robot_urdf_folder")
     robot_urdf_filepath = LaunchConfiguration("robot_urdf_filepath")    
-    robot_srdf_folder = LaunchConfiguration("robot_srdf_folder")        
-    robot_kinematics_folder = LaunchConfiguration("robot_kinematics_folder")        
-    robot_ompl_folder = LaunchConfiguration("robot_ompl_folder")        
-    robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")
+    dof = LaunchConfiguration("dof")
+    x = LaunchConfiguration("x")
+    y = LaunchConfiguration("y")
+    z = LaunchConfiguration("z")
+    roll = LaunchConfiguration("roll")
+    pitch = LaunchConfiguration("pitch")
+    yaw = LaunchConfiguration("yaw")
 
     rviz_config_file = (
         get_package_share_directory("kuka_resources")
@@ -64,32 +51,29 @@ def launch_setup(context, *args, **kwargs):
                 ]
             ),
             " ",
-            "use_fake_hardware:=",
-            "true",
+            "mode:=",
+            "mock",
+            " ",
+            "x:=",
+            x,
+            " ",
+            "y:=",
+            y,
+            " ",
+            "z:=",
+            z,
+            " ",
+            "roll:=",
+            roll,
+            " ",
+            "pitch:=",
+            pitch,
+            " ",
+            "yaw:=",
+            yaw,
         ]
     )
 
-    robot_description_semantic_content = Command(
-        [
-            PathJoinSubstitution([FindExecutable(name="xacro")]),
-            " ",
-            PathJoinSubstitution(
-                [FindPackageShare(robot_srdf_folder.perform(context)), robot_srdf_filepath.perform(context).split("/")[1], robot_srdf_filepath.perform(context).split("/")[2],]
-            ),
-            " ",
-            "name:=",
-            robot_model.perform(context),
-            " ",
-            "prefix:=",
-            " ",
-        ]
-    )
-    robot_description_semantic = {"robot_description_semantic": launch_ros.descriptions.ParameterValue(robot_description_semantic_content, value_type=str)}
-    
-    # Load kinematics yaml
-    kinematics_yaml = load_yaml(robot_kinematics_folder.perform(context), "config/kinematics.yaml")
-    robot_description_kinematics = {"robot_description_kinematics": kinematics_yaml}
-    
     robot_description = {"robot_description": robot_description_content}
 
     controller_config = (
@@ -105,6 +89,12 @@ def launch_setup(context, *args, **kwargs):
         parameters=[robot_description, controller_config],
     )
 
+    robot_description_kinematics = {
+        "robot_description_kinematics": {
+            "manipulator": {"kinematics_solver": "kdl_kinematics_plugin/KDLKinematicsPlugin"}
+        }
+    }
+
     rviz = Node(
         package="rviz2",
         executable="rviz2",
@@ -112,8 +102,6 @@ def launch_setup(context, *args, **kwargs):
         output="log",
         arguments=["-d", rviz_config_file, "--ros-args", "--log-level", "error"],
         parameters=[
-            robot_description,
-            robot_description_semantic,
             robot_description_kinematics,
         ],
     )
@@ -149,13 +137,13 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     launch_arguments = []
-    launch_arguments.append(DeclareLaunchArgument("robot_model", default_value=""))
-    launch_arguments.append(DeclareLaunchArgument("robot_family", default_value=""))
-    launch_arguments.append(DeclareLaunchArgument("dof", default_value="6"))
     launch_arguments.append(DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support"))
     launch_arguments.append(DeclareLaunchArgument("robot_urdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.urdf.xacro"))
-    launch_arguments.append(DeclareLaunchArgument("robot_srdf_folder", default_value="kuka_lbr_iisy_moveit_config"))
-    launch_arguments.append(DeclareLaunchArgument("robot_kinematics_folder", default_value="kuka_lbr_iisy_moveit_config"))
-    launch_arguments.append(DeclareLaunchArgument("robot_ompl_folder", default_value="kuka_lbr_iisy_moveit_config"))
-    launch_arguments.append(DeclareLaunchArgument("robot_srdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.srdf"))
+    launch_arguments.append(DeclareLaunchArgument("dof", default_value="6"))
+    launch_arguments.append(DeclareLaunchArgument("x", default_value="0"))
+    launch_arguments.append(DeclareLaunchArgument("y", default_value="0"))
+    launch_arguments.append(DeclareLaunchArgument("z", default_value="0"))
+    launch_arguments.append(DeclareLaunchArgument("roll", default_value="0"))
+    launch_arguments.append(DeclareLaunchArgument("pitch", default_value="0"))
+    launch_arguments.append(DeclareLaunchArgument("yaw", default_value="0"))
     return LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])

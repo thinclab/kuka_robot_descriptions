@@ -27,7 +27,9 @@ def generate_launch_description():
                 [FindPackageShare("kuka_agilus_support"), "urdf", "kr10_r1100_2.urdf.xacro"]
             ),
             " ",
-            "use_fake_hardware:=true",
+            "mode:=mock",
+            " ",
+            "use_gpio:=false",
         ]
     )
     robot_description = {"robot_description": robot_description_content}

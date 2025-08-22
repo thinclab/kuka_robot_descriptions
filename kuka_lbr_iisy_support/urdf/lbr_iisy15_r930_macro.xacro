@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="lbr_iisy15_r930">
   <!-- include helper xacros -->
-  <xacro:include filename="$(find kuka_lbr_iisy_support)/urdf/lbr_iisy_ros2_control.xacro"/>
   <xacro:include filename="$(find kuka_resources)/urdf/common_materials.xacro"/>
-  <xacro:include filename="$(find kuka_lbr_iisy_support)/urdf/lbr_iisy_transmission.xacro"/>
-  <xacro:macro name="kuka_lbr_iisy15_r930_robot" params="prefix controller_ip client_ip use_fake_hardware roundtrip_time qos_config_file *origin">
-    <!-- ros2 control instance -->
-    <xacro:kuka_lbr_iisy_ros2_control name="${prefix}lbr_iisy15_r930" prefix="${prefix}" client_ip="${client_ip}" controller_ip="${controller_ip}" use_fake_hardware="${use_fake_hardware}" roundtrip_time="${roundtrip_time}" qos_config_file="${qos_config_file}"/>
+  <xacro:macro name="kuka_lbr_iisy15_r930_robot" params="prefix *origin package_name">
     <!-- links - main serial chain -->
     <link name="world"/>
     <link name="${prefix}base_link">
       <collision>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/collision/base_link.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/collision/base_link.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
       </collision>
+      <inertial>
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+        <mass value="8.666E0"/>
+        <origin rpy="0.0 -0.0 0.0" xyz="0.0 0.0 0.0"/>
+      </inertial>
       <visual>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/visual/base_link.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/visual/base_link.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
         <xacro:material_kuka_ral_pure_white/>
@@ -27,13 +28,18 @@
     <link name="${prefix}link_1">
       <collision>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/collision/link_1.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/collision/link_1.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
       </collision>
+      <inertial>
+        <inertia ixx="0.0489108039022503" ixy="0.0" ixz="0.0" iyy="0.0383705935400879" iyz="0.0" izz="0.0522121642769911"/>
+        <mass value="9.62E0"/>
+        <origin rpy="-1.3035636348359196 -0.7815781053554747 1.2529437882898196" xyz="0.00344301039501039 0.0191980353430353 -0.08662803846153849"/>
+      </inertial>
       <visual>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/visual/link_1.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/visual/link_1.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
         <xacro:material_kuka_ral_pure_white/>
@@ -42,13 +48,18 @@
     <link name="${prefix}link_2">
       <collision>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/collision/link_2.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/collision/link_2.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
       </collision>
+      <inertial>
+        <inertia ixx="0.0306168627253135" ixy="0.0" ixz="0.0" iyy="0.252047093745431" iyz="0.0" izz="0.258650362609461"/>
+        <mass value="8.079E0"/>
+        <origin rpy="-0.017400716172763755 1.2184236596039677E-4 7.609596915052352E-4" xyz="0.144939171927219 4.90834261666048E-4 -0.0453728741180839"/>
+      </inertial>
       <visual>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/visual/link_2.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/visual/link_2.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
         <xacro:material_kuka_ral_pure_white/>
@@ -57,13 +68,18 @@
     <link name="${prefix}link_3">
       <collision>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/collision/link_3.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/collision/link_3.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
       </collision>
+      <inertial>
+        <inertia ixx="0.0181557035426496" ixy="0.0" ixz="0.0" iyy="0.0346916391676837" iyz="0.0" izz="0.037776951242458"/>
+        <mass value="7.6604E0"/>
+        <origin rpy="0.1692981167548117 0.5271433699021747 -2.9605806714357508" xyz="0.0400709362435382 0.00400998642368544 0.0499127101717926"/>
+      </inertial>
       <visual>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/visual/link_3.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/visual/link_3.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
         <xacro:material_kuka_ral_pure_white/>
@@ -72,13 +88,18 @@
     <link name="${prefix}link_4">
       <collision>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/collision/link_4.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/collision/link_4.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
       </collision>
+      <inertial>
+        <inertia ixx="0.0208771593304277" ixy="0.0" ixz="0.0" iyy="0.0526135698207455" iyz="0.0" izz="0.0587485883681802"/>
+        <mass value="5.7014E0"/>
+        <origin rpy="1.535166999601284 -1.2065715961818437 -1.512863903166617" xyz="0.00141160065948714 0.060839292103693904 -0.12025970463395"/>
+      </inertial>
       <visual>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/visual/link_4.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/visual/link_4.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
         <xacro:material_kuka_ral_pure_white/>
@@ -87,13 +108,18 @@
     <link name="${prefix}link_5">
       <collision>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/collision/link_5.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/collision/link_5.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
       </collision>
+      <inertial>
+        <inertia ixx="0.00667288072123254" ixy="0.0" ixz="0.0" iyy="0.00503543168148481" iyz="0.0" izz="0.00841044585602456"/>
+        <mass value="2.382E0"/>
+        <origin rpy="0.4256203528755516 0.1454426479570896 1.2195648324165669" xyz="0.0365444794290512 -0.00829581863979849 -0.0371200125944584"/>
+      </inertial>
       <visual>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/visual/link_5.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/visual/link_5.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
         <xacro:material_kuka_ral_pure_white/>
@@ -102,13 +128,18 @@
     <link name="${prefix}link_6">
       <collision>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/collision/link_6.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/collision/link_6.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
       </collision>
+      <inertial>
+        <inertia ixx="0.00390274036654823" ixy="0.0" ixz="0.0" iyy="0.00286930887521153" iyz="0.0" izz="0.00403512413298348"/>
+        <mass value="1.509E0"/>
+        <origin rpy="-0.051936335875096745 -0.1296523529795729 -0.0038347791577379832" xyz="-5.61365142478463E-4 0.00904387011265739 -0.0494449237905898"/>
+      </inertial>
       <visual>
         <geometry>
-          <mesh filename="package://kuka_lbr_iisy_support/meshes/lbr_iisy15_r930/visual/link_6.stl"/>
+          <mesh filename="package://${package_name}/meshes/lbr_iisy15_r930/visual/link_6.stl"/>
         </geometry>
         <origin rpy="-0.0 0.0 -0.0" xyz="0.0 0.0 0.0"/>
         <xacro:material_kuka_ral_pure_white/>
