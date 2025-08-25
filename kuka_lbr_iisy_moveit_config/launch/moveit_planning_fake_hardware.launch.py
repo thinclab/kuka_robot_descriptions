@@ -26,6 +26,7 @@ from launch.launch_description_sources.python_launch_description_source import (
 )
 from launch.substitutions import LaunchConfiguration
 
+
 def load_yaml(package_name, file_path):
     package_path = get_package_share_directory(package_name)
     absolute_file_path = os.path.join(package_path, file_path)
@@ -36,13 +37,14 @@ def load_yaml(package_name, file_path):
     except OSError:  # parent of IOError, OSError *and* WindowsError where available
         return None
 
+
 def launch_setup(context, *args, **kwargs):
     robot_model = LaunchConfiguration("robot_model")
-    robot_urdf_folder = LaunchConfiguration("robot_urdf_folder")    
-    robot_urdf_filepath = LaunchConfiguration("robot_urdf_filepath")    
-    robot_srdf_folder = LaunchConfiguration("robot_srdf_folder")        
-    robot_kinematics_folder = LaunchConfiguration("robot_kinematics_folder")        
-    robot_ompl_folder = LaunchConfiguration("robot_ompl_folder")        
+    robot_urdf_folder = LaunchConfiguration("robot_urdf_folder")
+    robot_urdf_filepath = LaunchConfiguration("robot_urdf_filepath")
+    robot_srdf_folder = LaunchConfiguration("robot_srdf_folder")
+    robot_kinematics_folder = LaunchConfiguration("robot_kinematics_folder")
+    robot_ompl_folder = LaunchConfiguration("robot_ompl_folder")
     robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")
     x = LaunchConfiguration("x")
     y = LaunchConfiguration("y")
@@ -53,15 +55,17 @@ def launch_setup(context, *args, **kwargs):
 
     moveit_config = (
         MoveItConfigsBuilder("kuka_lbr_iisy")
-        .robot_description(
-            file_path=robot_urdf_filepath.perform(context)
-        )
+        .robot_description(file_path=robot_urdf_filepath.perform(context))
         .robot_description_semantic(
             get_package_share_directory(robot_srdf_folder.perform(context))
             + robot_srdf_filepath.perform(context)
         )
-        .robot_description_kinematics(file_path=f"{get_package_share_directory(robot_kinematics_folder.perform(context))}/config/kinematics.yaml")
-        .trajectory_execution(file_path=f"{get_package_share_directory(robot_kinematics_folder.perform(context))}/config/moveit_controllers.yaml")
+        .robot_description_kinematics(
+            file_path=f"{get_package_share_directory(robot_kinematics_folder.perform(context))}/config/kinematics.yaml"
+        )
+        .trajectory_execution(
+            file_path=f"{get_package_share_directory(robot_kinematics_folder.perform(context))}/config/moveit_controllers.yaml"
+        )
         .planning_scene_monitor(
             publish_robot_description=True, publish_robot_description_semantic=True
         )
@@ -79,9 +83,7 @@ def launch_setup(context, *args, **kwargs):
         }
     }
 
-    ompl_planning_yaml = load_yaml(
-        robot_ompl_folder.perform(context), "config/ompl_planning.yaml"
-    )
+    ompl_planning_yaml = load_yaml(robot_ompl_folder.perform(context), "config/ompl_planning.yaml")
     ompl_planning_pipeline_config["move_group"].update(ompl_planning_yaml)
 
     move_group_server = Node(
@@ -104,9 +106,15 @@ def launch_setup(context, *args, **kwargs):
             "robot_urdf_folder": f"{robot_urdf_folder.perform(context)}",
             "robot_srdf_folder": f"{robot_srdf_folder.perform(context)}",
             "robot_urdf_filepath": f"{robot_urdf_filepath.perform(context)}",
-            "robot_srdf_filepath": f"{robot_srdf_filepath.perform(context)}",           
+            "robot_srdf_filepath": f"{robot_srdf_filepath.perform(context)}",
             "robot_kinematics_folder": f"{robot_kinematics_folder.perform(context)}",
             "robot_ompl_folder": f"{robot_ompl_folder.perform(context)}",
+            "x": x,
+            "y": y,
+            "z": z,
+            "roll": roll,
+            "pitch": pitch,
+            "yaw": yaw,
         }.items(),
     )
 
@@ -118,12 +126,28 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     launch_arguments = []
     launch_arguments.append(DeclareLaunchArgument("robot_model", default_value="lbr_iisy3_r760"))
-    launch_arguments.append(DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support"))
-    launch_arguments.append(DeclareLaunchArgument("robot_urdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.urdf.xacro"))
-    launch_arguments.append(DeclareLaunchArgument("robot_srdf_folder", default_value="kuka_lbr_iisy_moveit_config"))
-    launch_arguments.append(DeclareLaunchArgument("robot_kinematics_folder", default_value="kuka_lbr_iisy_moveit_config"))
-    launch_arguments.append(DeclareLaunchArgument("robot_ompl_folder", default_value="kuka_lbr_iisy_moveit_config"))
-    launch_arguments.append(DeclareLaunchArgument("robot_srdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.srdf"))
+    launch_arguments.append(
+        DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support")
+    )
+    launch_arguments.append(
+        DeclareLaunchArgument(
+            "robot_urdf_filepath", default_value="/urdf/lbr_iisy3_r760.urdf.xacro"
+        )
+    )
+    launch_arguments.append(
+        DeclareLaunchArgument("robot_srdf_folder", default_value="kuka_lbr_iisy_moveit_config")
+    )
+    launch_arguments.append(
+        DeclareLaunchArgument(
+            "robot_kinematics_folder", default_value="kuka_lbr_iisy_moveit_config"
+        )
+    )
+    launch_arguments.append(
+        DeclareLaunchArgument("robot_ompl_folder", default_value="kuka_lbr_iisy_moveit_config")
+    )
+    launch_arguments.append(
+        DeclareLaunchArgument("robot_srdf_filepath", default_value="/urdf/lbr_iisy3_r760.srdf")
+    )
     launch_arguments.append(DeclareLaunchArgument("x", default_value="0"))
     launch_arguments.append(DeclareLaunchArgument("y", default_value="0"))
     launch_arguments.append(DeclareLaunchArgument("z", default_value="0"))

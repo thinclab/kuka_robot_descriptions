@@ -24,7 +24,7 @@ from launch_ros.substitutions import FindPackageShare
 
 def launch_setup(context, *args, **kwargs):
     robot_urdf_folder = LaunchConfiguration("robot_urdf_folder")
-    robot_urdf_filepath = LaunchConfiguration("robot_urdf_filepath")    
+    robot_urdf_filepath = LaunchConfiguration("robot_urdf_filepath")
     dof = LaunchConfiguration("dof")
     x = LaunchConfiguration("x")
     y = LaunchConfiguration("y")
@@ -137,8 +137,14 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     launch_arguments = []
-    launch_arguments.append(DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support"))
-    launch_arguments.append(DeclareLaunchArgument("robot_urdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.urdf.xacro"))
+    launch_arguments.append(
+        DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support")
+    )
+    launch_arguments.append(
+        DeclareLaunchArgument(
+            "robot_urdf_filepath", default_value="/urdf/lbr_iisy3_r760.urdf.xacro"
+        )
+    )
     launch_arguments.append(DeclareLaunchArgument("dof", default_value="6"))
     launch_arguments.append(DeclareLaunchArgument("x", default_value="0"))
     launch_arguments.append(DeclareLaunchArgument("y", default_value="0"))
