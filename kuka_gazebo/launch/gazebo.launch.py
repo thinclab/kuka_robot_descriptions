@@ -26,7 +26,8 @@ import os
 def launch_setup(context, *args, **kwargs):
     world = LaunchConfiguration("gz_world")
     robot_model = LaunchConfiguration("robot_model")
-    robot_family_path = LaunchConfiguration("robot_family_support")
+    robot_urdf_folder = LaunchConfiguration("robot_urdf_folder")
+    robot_urdf_filepath = LaunchConfiguration("robot_urdf_filepath")  
     ns = LaunchConfiguration("namespace")
     x = LaunchConfiguration("x")
     y = LaunchConfiguration("y")
@@ -46,9 +47,9 @@ def launch_setup(context, *args, **kwargs):
             " ",
             PathJoinSubstitution(
                 [
-                    FindPackageShare(robot_family_path.perform(context)),
-                    "urdf",
-                    robot_model.perform(context) + ".urdf.xacro",
+                    FindPackageShare(robot_urdf_folder.perform(context)),
+                    robot_urdf_filepath.perform(context).split("/")[1],
+                    robot_urdf_filepath.perform(context).split("/")[2],
                 ]
             ),
             " ",
@@ -173,9 +174,8 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     launch_arguments = []
     launch_arguments.append(DeclareLaunchArgument("robot_model", default_value="lbr_iisy3_r760"))
-    launch_arguments.append(
-        DeclareLaunchArgument("robot_family_support", default_value="kuka_lbr_iisy_support")
-    )
+    launch_arguments.append(DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support"))
+    launch_arguments.append(DeclareLaunchArgument("robot_urdf_filepath", default_value=f"/urdf/lbr_iisy3_r760.urdf.xacro"))
     launch_arguments.append(DeclareLaunchArgument("namespace", default_value=""))
     launch_arguments.append(DeclareLaunchArgument("x", default_value="0"))
     launch_arguments.append(DeclareLaunchArgument("y", default_value="0"))
