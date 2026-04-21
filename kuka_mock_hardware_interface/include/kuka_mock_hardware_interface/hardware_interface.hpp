@@ -40,7 +40,8 @@ static constexpr size_t ACCELERATION_INTERFACE_INDEX = 2;
 class KukaMockHardwareInterface : public hardware_interface::SystemInterface
 {
 public:
-  CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
+  CallbackReturn on_init(
+    const hardware_interface::HardwareComponentInterfaceParams & params) override;
   CallbackReturn on_configure(const rclcpp_lifecycle::State & previous_state) override;
 
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
@@ -115,10 +116,24 @@ protected:
 
   RobotState robot_state_;
 
+  // Command interfaces
   double control_mode_ = 0;  // default to undefined
   double receive_multiplier_ = 1;
   double send_period_ms_ = 10;
-  double server_state_;
+  double cycle_time_ms_ = 4;
+
+  // State interfaces
+  double drive_state_ = 0.0;
+  double server_state_ = 0.0;
+  double control_mode_state_ = 0.0;
+  double cycle_time_state_ = 0.0;
+  double drives_powered_ = 0.0;
+  double emergency_stop_ = 0.0;
+  double guard_stop_ = 0.0;
+  double in_motion_ = 0.0;
+  double motion_possible_ = 0.0;
+  double operation_mode_ = 0.0;
+  double robot_stopped_ = 1.0;
 
   // KUKA-specific parameters
   std::chrono::nanoseconds cycle_time_nano_;

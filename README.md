@@ -2,6 +2,8 @@
 
 This repository contains support packages that can be used with real KUKA robots as well as with simulations.
 
+If you find something confusing, not working, or would like to contribute, please read our [contributing guide](https://github.com/kroshu/kuka_robot_descriptions/blob/master/CONTRIBUTING.md) before opening an issue or creating a pull request.
+
 ROS2 Distro | Branch | Github CI
 ------------ | -------------- | --------------
 **Jazzy** | [`master`](https://github.com/kroshu/kuka_robot_descriptions/tree/master) | [![Build Status](https://github.com/kroshu/kuka_robot_descriptions/actions/workflows/industrial_ci.yml/badge.svg?branch=master)](https://github.com/kroshu/kuka_robot_descriptions/actions)
@@ -15,6 +17,7 @@ ROS2 Distro | Branch | Github CI
 - `kuka_fortec_support` contains urdf, config and mesh files for KUKA fortec robots.
 - `kuka_iontec_support` contains urdf, config and mesh files for KUKA iontec robots.
 - `kuka_quantec_support` contains urdf, config and mesh files for KUKA quantec robots.
+- `kuka_kl_support` contains urdf, config and mesh files for KUKA KL units.
 - `kuka_kr_moveit_config` contains configuration files for KUKA KR robots necessary for planning with MoveIt.
 - `kuka_lbr_iisy_support` contains urdf, config and mesh files for KUKA iisy robots.
 - `kuka_lbr_iisy_moveit_config` contains configuration files for KUKA LBR iisy robots necessary for planning with MoveIt.
@@ -91,6 +94,77 @@ Example of attaching an end effector (with link name `eef_base_link`) to the `fl
 </joint>
 ```
 
+### External axis support
+
+Robots marked as supporting external exis in the [supported features](#supported-features) have URDFs prepared for this feature.
+
+- The `world` link and the `world-base_link` joint (and the `origin` block) are moved from the macro into the URDF xacro.
+
+  - This allows you to:
+
+    - easily modify the link chain between `world` and the robot base (e.g., add external axes),
+    - align multiple robots to a shared `world` link.
+
+- A new parameter, `ext_axes_ros2_control_joints`, is added to the robot family's `ros2_control` macro.
+
+  - It is used to insert joints from external axes into the correct section of the macro.
+  - An empty block is required even when no external axes are used.
+
+Without any external axes, the end of the URDF looks as follows (with _robotfamily_ and _robotmodel_ as placeholders):
+
+```xml
+<xacro:kuka_robotfamily_ros2_control ...>
+  <ext_axes_ros2_control_joints/>
+</xacro:kuka_robotfamily_ros2_control>
+
+<!-- world link -->
+<link name="world"/>
+
+<!-- robot links, joints -->
+<xacro:robotmodel prefix="$(arg prefix)" package_name="kuka_robotfamily_support"/>
+
+<!-- default world - base_link joint -->
+<joint name="$(arg prefix)world-base_link" type="fixed">
+  <parent link="world"/>
+  <child link="$(arg prefix)base_link"/>
+  <origin xyz="$(arg x) $(arg y) $(arg z)" rpy="$(arg roll) $(arg pitch) $(arg yaw)"/>
+</joint>
+```
+
+With an external axis (KL100-2 in this example):
+
+```xml
+<xacro:kuka_robotfamily_ros2_control ...>
+  <ext_axes_ros2_control_joints>
+    <!-- kl ros2 control joints -->
+    <xacro:kuka_kl_ros2_control_joints/>
+  </ext_axes_ros2_control_joints>
+</xacro:kuka_robotfamily_ros2_control>
+
+<!-- world link -->
+<link name="world"/>
+
+<!-- kl100_2 links -->
+<xacro:kl100_2_links/>
+
+<xacro:robotmodel prefix="$(arg prefix)" package_name="kuka_robotfamily_support"/>
+
+<!-- kl100_2 joints -->
+<xacro:kl100_2_joints robot_base_link="$(arg prefix)base_link">
+  <origin xyz="$(arg x) $(arg y) $(arg z)" rpy="$(arg roll) $(arg pitch) $(arg yaw)"/>
+</xacro:kl100_2_joints>
+```
+
+The order of these tags is important to produce a valid URDF.
+
+To support different external axis types (prismatic and revolute), custom `ros2_control` joint parameters were introduced: `type` and `is_external`. An example can be found in [`kl_ros2_control_macro.xacro`](./kuka_kl_support/urdf/kl_ros2_control_macro.xacro). These parameters are optional; if omitted, the driver assumes revolute internal joints.
+
+Although these parameters increase configuration complexity, they are necessary. Without them, the driver could not correctly distinguish between internal and external joints, which is critical for the RobotSensorInterface option package. They also allow the driver to convert between ROS 2 units (meters/radians) and KUKA units (millimetres/degrees).
+
+#### Support for KL units
+
+To demonstrate external axis integration in the KUKA ecosystem, we provide a support package for KUKA KL units, with the KL100‑2 as the first example, see the [`kuka_kl_support`](./kuka_kl_support/) directory. This package differs from the others: instead of full URDFs, it provides xacro macros used to build a robot URDF with integrated KL units.
+
 ## What is verified?
 
 The following table shows what data is verified for each robot in the support packages:
@@ -101,16 +175,35 @@ The following table shows what data is verified for each robot in the support pa
 |lbr_iisy11_r1300| - | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 |lbr_iisy15_r930| - | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 |lbr_iiwa14_r820| - | ✓ | ✓ | ✓ | | | ✓ |
+|kr4_r600| agilus | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr6_r700_2| agilus | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 |kr6_r700_sixx| agilus | ✓ | ✓ | ✓ | | | ✓ |
+|kr6_r900_2| agilus | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 |kr6_r900_sixx| agilus | ✓ | ✓ | ✓ | | | ✓ |
+|kr10_r900_2| agilus | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 |kr10_r1100_2| agilus | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr8_r1440_2_arc_hw| cybertech | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr8_r2100_2_arc_hw| cybertech | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr12_r1450_3_hw| cybertech | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr16_r1610_2| cybertech | ✓ | ✓ | ✓ | ✓ | | ✓ |
 |kr16_r2010_2| cybertech | ✓ | ✓ | ✓ | ✓ | | ✓ |
+|kr20_r1810_2| cybertech | ✓ | ✓ | ✓ | ✓ | | ✓ |
+|kr20_r3100| iontec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr30_r2100| iontec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr50_r2500| iontec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 |kr70_r2100| iontec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 |kr150_r3100| quantec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 |kr210_r2700_2| quantec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 |kr210_r3100_2| quantec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-|kr240_r3330| fortec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr210_r3100_ultra| quantec | ✓ | ✓ | ✓ | ✓ | | ✓ |
+|kr210_r3300_2_k| quantec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr240_r2900_2| quantec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr300_r2700_2| quantec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr240_r3330| fortec | ✓ | ✓ | ✓ | ✓ | | ✓ |
+|kr300_r2800_2_mt| fortec | ✓ | ✓ | ✓ | ✓ | | ✓ |
+|kr500_r2800_2| fortec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 |kr560_r3100_2| fortec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+|kr800_r2800_2| fortec | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ## Supported features
 
@@ -118,19 +211,38 @@ The following table shows the supported customizable features for each robot in 
 
 |Robot name | Robot family | GPIO support | External axis support | Gazebo support |
 |---|:---:|:---:|:---:|:---:|
-|lbr_iisy3_r760| - | | | ✓ |
-|lbr_iisy11_r1300| - | | | ✓ |
-|lbr_iisy15_r930| - | | | ✓ |
-|lbr_iiwa14_r820| - | | | |
-|kr6_r700_sixx| agilus | ✓ | | |
-|kr6_r900_sixx| agilus | ✓ | | |
-|kr10_r1100_2| agilus | ✓ | | ✓ |
-|kr16_r2010_2| cybertech | ✓ | | ✓ |
-|kr70_r2100| iontec | ✓ | | ✓ |
-|kr210_r2700_2| quantec | ✓ | | ✓ |
-|kr210_r3100_2| quantec | ✓ | | ✓ |
-|kr240_r3330| fortec | ✓ | | ✓ |
-|kr560_r3100_2| fortec | ✓ | | ✓ |
+|lbr_iisy3_r760| lbr_iisy | | ✓ | ✓ |
+|lbr_iisy11_r1300| lbr_iisy | | ✓ | ✓ |
+|lbr_iisy15_r930| lbr_iisy | | ✓ | ✓ |
+|lbr_iiwa14_r820| lbr_iiwa | | ✓ | |
+|kr4_r600| agilus | ✓ | ✓ | ✓ |
+|kr6_r700_2| agilus | ✓ | ✓ | ✓ |
+|kr6_r700_sixx| agilus | ✓ | ✓ | |
+|kr6_r900_2| agilus | ✓ | ✓ | ✓ |
+|kr6_r900_sixx| agilus | ✓ | ✓ | |
+|kr10_r900_2| agilus | ✓ | ✓ | ✓ |
+|kr10_r1100_2| agilus | ✓ | ✓ | ✓ |
+|kr8_r1440_2_arc_hw| cybertech | ✓ | ✓ | ✓ |
+|kr8_r2100_2_arc_hw| cybertech | ✓ | ✓ | ✓ |
+|kr12_r1450_3_hw| cybertech | ✓ | ✓ | ✓ |
+|kr16_r1610_2| cybertech | ✓ | ✓ | |
+|kr16_r2010_2| cybertech | ✓ | ✓ | |
+|kr20_r1810_2| cybertech | ✓ | ✓ | |
+|kr20_r3100| iontec | ✓ | ✓ | ✓ |
+|kr30_r2100| iontec | ✓ | ✓ | ✓ |
+|kr50_r2500| iontec | ✓ | ✓ | ✓ |
+|kr70_r2100| iontec | ✓ | ✓ | ✓ |
+|kr210_r2700_2| quantec | ✓ | ✓ | ✓ |
+|kr210_r3100_2| quantec | ✓ | ✓ | ✓ |
+|kr210_r3100_ultra| quantec | ✓ | ✓ | |
+|kr210_r3300_2_k| quantec | ✓ | ✓ | ✓ |
+|kr240_r2900_2| quantec | ✓ | ✓ | ✓ |
+|kr300_r2700_2| quantec | ✓ | ✓ | ✓ |
+|kr240_r3330| fortec | ✓ | ✓ | |
+|kr300_r2800_2_mt| fortec | ✓ | ✓ | ✓ |
+|kr500_r2800_2| fortec | ✓ | ✓ | ✓ |
+|kr560_r3100_2| fortec | ✓ | ✓ | ✓ |
+|kr800_r2800_2| fortec | ✓ | ✓ | ✓ |
 
 ## Custom mock hardware
 
@@ -177,44 +289,78 @@ ros2 launch kuka_lbr_iiwa_moveit_config moveit_planning_fake_hardware.launch.py
 
 A `robot_model` argument can be added after the command (e.g. `robot_model:=lbr_iisy11_r1300`). The default robot model is `lbr_iisy3_r760`
 
-These launch files are not using the actual driver implementation, they only start `rviz` the `move_group` server and a `ros2_control_node` with fake hardware and two controllers `joint_state_broadcaster` and `joint_trajectory_controller` The server will be able to accept planning requests from the plugin or from code. (An example how to create such a request from C++ code can be found in the `iiqka_moveit_example` package in the `kuka_drivers` repository.)
+These launch files are not using the actual driver implementation, they only start `rviz` the `move_group` server and a `ros2_control_node` with fake hardware and two controllers `joint_state_broadcaster` and `joint_trajectory_controller` The server will be able to accept planning requests from the plugin or from code. An example how to create such a request from C++ code can be found in the `iiqka_moveit_example` package in the [`examples`](https://github.com/kroshu/examples) repository.
 
 ## Starting the move group server with Gazebo
 
-First, Gazebo needs to be launched. By default, the `kuka_gazebo` launch file will spawn the `lbr iisy3 r760` robot model. The `mode` parameter is set to `gazebo` by default. To launch Gazebo with a different robot model, the following command can be used:
-
-**KR210 r2700:**
+It is also possible to plan with moveit for robots spawned in Gazebo, first the `gazebo_startup` launch file has to be started. By default, the launch file will start the gazebo server with UI and spawn the `lbr_iisy3_r760` robot model with the `mode` parameter set to `gazebo`. To launch Gazebo with a different robot model and family (KR 210 R2700-2 in the example), the following command can be used:
 
 ```bash
-ros2 launch kuka_gazebo gazebo.launch.py robot_model:=kr210_r2700_2 robot_family_support:=kuka_quantec_support
+ros2 launch kuka_gazebo gazebo_startup.launch.py robot_model:=kr210_r2700_2 robot_family:=quantec
+```
+Starting the launch file also starts the `joint_trajectory_controller`, which claims the `position` command interface and `joint_state_broadcaster`. Once Gazebo is launched, the move group server can be started as well, with the `use_sim_time` argument set to True:
+
+```bash
+ros2 launch kuka_kr_moveit_config moveit_server.launch.py robot_model:=kr210_r2700_2 robot_family:=quantec use_sim_time:=True
 ```
 
-The `robot_family_support` parameter is the name of the relevant support package.
+The moveit server will be able to accept planning requests from the rviz plugin or from code, similarly to the mock hardware. The same launch file can also be used to start a moveit server that will command real robots.
 
-Launching Gazebo starts the `joint_trajectory_controller` and `joint_state_broadcaster`. The `joint_trajectory_controller` claims the `position` command interface.
+*Note: LBR iiwa robots do not have acceleration limits available, therefore planning currently fails for them.*
 
-Once Gazebo is launched, the move group server can be launched as well:
+## Gazebo-Supported Robot Testing in CI Pipeline
 
-```bash
-ros2 launch kuka_kr_moveit_config moveit_planning_gazebo.launch.py robot_model:=kr210_r2700_2 robot_family_support:=kuka_quantec_support
-```
+The tests for Gazebo-supported robots have been successfully integrated into the existing Continuous Integration (CI) architecture. The testing process follows a **two-part structure**, as illustrated in the diagram below.
 
-## Running the Gazebo example
+### 1. After-Build Hook Phase
 
-First, launch gazebo with the lbr iisy3 r760 robot and the Gazebo world containing the box:
+Immediately after the build phase (but before the testing phase), the CI pipeline triggers the `after_build_hook.sh` script. This script launches `run_gazebo_tests.py`, which performs the following tasks:
 
-```bash
-ros2 launch kuka_gazebo gazebo.launch.py robot_model:=lbr_iisy3_r760 robot_family_support:=kuka_lbr_iisy_support gz_world:=world/box.sdf
-```
+- **Reads robot names and families** from the `README.md` file to ensure all Gazebo-supported robots are included.
+- **Executes parameterized tests** using `gazebo_support_test.py`, a parametrized test script, which:
+  - Launches Gazebo in headless mode, launching the server and the ros gazebo bridge separately.
+  - Checks whether the simulation successfully configures and activates:
+    - Hardware interfaces
+    - Joint State Broadcaster
+    - Joint Trajectory Controller
+  - Collects and returns the test results.
 
-Next, start the move group server with the lbr iisy3 r760 robot:
+However, Gazebo does not shut down automatically after the test. To handle this, `run_gazebo_tests.py` manually terminates Gazebo using a `kill` command. Since invoking `kill` within a test causes an automatic test failure, this step is performed **outside the testing framework**.
 
-```bash
-ros2 launch kuka_lbr_iisy_moveit_config moveit_planning_gazebo.launch.py robot_model:=lbr_iisy3_r760 robot_family_support:=kuka_lbr_iisy_support
-```
+### 2. Testing Phase
 
-Finally, run the example:
+To bridge the gap between the actual Gazebo tests and the CI testing framework, we use the following solution:
 
-```bash
-ros2 run kuka_gazebo gazebo_moveit_example
+- Test results are written to a text file: `gazebo_test.txt`.
+- During the testing phase, `test_gazebo_robot_support.py` reads and evaluates the results from this file.
+- To keep the test alive long enough for evaluation, we launch `gazebo_test_keep_alive.cpp`, a simple publisher node that ensures the test file remains active.
+
+> **Note:** The current test uses **Gazebo Harmonic (Gazebo Sim v8.9.0)** for verification.
+
+```mermaid
+graph TD
+    %% CI Pipeline Section
+    subgraph CI Pipeline
+        A[industrial_ci.yml] -->|runs| B[after_build_hook.sh]
+        A -->|Colcon test runs| H[test_gazebo_robot_support.py]
+        H -->|Launch| J[gazebo_test_keep_alive.cpp]
+        J -->|Keep alive| H
+    end
+
+    %% Test Execution Section
+    subgraph Test Execution
+        B -->|executes| C[run_gazebo_tests.py]
+        F[README.md] -->|reads robot, family| C
+        C -->|executes test| D[gazebo_support_test.py]
+        K[bridge_config.yaml] -->|configures bridge| E
+        D -->|launch ros_gz_bridge| E[ros_gz_bridge.launch.py]
+        D -->|launch Gazebo server| I[gz_server.launch.py]
+        E -->|translate| L[headless Gazebo]
+        I -->|launches server| L
+        L -->|outputs to| D
+        C -->|KILL| L
+        D -->|returns result| C
+        C -->|writes results| G[gazebo_test.txt]
+        G -->|test results| H
+    end
 ```
