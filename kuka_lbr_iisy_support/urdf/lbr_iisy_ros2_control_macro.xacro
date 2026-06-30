@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="kuka_lbr_iisy_ros2_control" params="name driver_version prefix client_ip client_port mxa_client_port controller_ip use_gpio mode qos_config_file roundtrip_time verify_robot_model **ext_axes_ros2_control_joints">
+  <xacro:macro name="kuka_lbr_iisy_ros2_control" params="name driver_version prefix client_ip client_port mxa_client_port controller_ip use_gpio mode qos_config_file roundtrip_time verify_robot_model">
     <!-- gazebo -->
     <xacro:if value="${mode == 'gazebo'}">
       <xacro:include filename="$(find kuka_gazebo)/gazebo/kuka_gazebo.xacro"/>
@@ -64,7 +64,6 @@
           <plugin>gz_ros2_control/GazeboSimSystem</plugin>
         </xacro:if>
       </hardware>
-      <xacro:insert_block name="ext_axes_ros2_control_joints"/>
       <!-- define joints and command/state interfaces for each joint -->
       <joint name="${prefix}joint_1">
         <command_interface name="position"/>
@@ -78,9 +77,6 @@
         </state_interface>
         <xacro:if value="${driver_version == 'eac'}">
           <state_interface name="effort">
-            <param name="initial_value">0.0</param>
-          </state_interface>
-          <state_interface name="commanded_position">
             <param name="initial_value">0.0</param>
           </state_interface>
         </xacro:if>
@@ -99,9 +95,6 @@
           <state_interface name="effort">
             <param name="initial_value">0.0</param>
           </state_interface>
-          <state_interface name="commanded_position">
-            <param name="initial_value">0.0</param>
-          </state_interface>
         </xacro:if>
       </joint>
       <joint name="${prefix}joint_3">
@@ -116,9 +109,6 @@
         </state_interface>
         <xacro:if value="${driver_version == 'eac'}">
           <state_interface name="effort">
-            <param name="initial_value">0.0</param>
-          </state_interface>
-          <state_interface name="commanded_position">
             <param name="initial_value">0.0</param>
           </state_interface>
         </xacro:if>
@@ -137,9 +127,6 @@
           <state_interface name="effort">
             <param name="initial_value">0.0</param>
           </state_interface>
-          <state_interface name="commanded_position">
-            <param name="initial_value">0.0</param>
-          </state_interface>
         </xacro:if>
       </joint>
       <joint name="${prefix}joint_5">
@@ -156,9 +143,6 @@
           <state_interface name="effort">
             <param name="initial_value">0.0</param>
           </state_interface>
-          <state_interface name="commanded_position">
-            <param name="initial_value">0.0</param>
-          </state_interface>
         </xacro:if>
       </joint>
       <joint name="${prefix}joint_6">
@@ -173,9 +157,6 @@
         </state_interface>
         <xacro:if value="${driver_version == 'eac'}">
           <state_interface name="effort">
-            <param name="initial_value">0.0</param>
-          </state_interface>
-          <state_interface name="commanded_position">
             <param name="initial_value">0.0</param>
           </state_interface>
         </xacro:if>

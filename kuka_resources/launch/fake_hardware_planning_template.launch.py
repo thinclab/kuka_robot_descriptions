@@ -25,8 +25,11 @@ from launch.launch_description_sources.python_launch_description_source import (
 
 
 def launch_setup(context, *args, **kwargs):
+    robot_model = LaunchConfiguration("robot_model")
     robot_urdf_folder = LaunchConfiguration("robot_urdf_folder")
     robot_urdf_filepath = LaunchConfiguration("robot_urdf_filepath")
+    robot_srdf_folder = LaunchConfiguration("robot_srdf_folder")
+    robot_srdf_filepath = LaunchConfiguration("robot_srdf_filepath")
     dof = LaunchConfiguration("dof")
     x = LaunchConfiguration("x")
     y = LaunchConfiguration("y")
@@ -116,7 +119,13 @@ def launch_setup(context, *args, **kwargs):
                 get_package_share_directory("kuka_resources"),
                 "/launch/moveit_server_template.launch.py",
             ]
-        )
+        ),
+        launch_arguments = {
+            "robot_model": robot_model,
+            "robot_urdf_filepath": robot_urdf_filepath,
+            "robot_srdf_folder": robot_srdf_folder,
+            "robot_srdf_filepath": robot_srdf_filepath,
+        }.items()
     )
 
     to_start = [control_node, robot_state_publisher, moveit_server] + controller_spawners
@@ -126,14 +135,11 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     launch_arguments = []
-    launch_arguments.append(
-        DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support")
-    )
-    launch_arguments.append(
-        DeclareLaunchArgument(
-            "robot_urdf_filepath", default_value="/urdf/lbr_iisy3_r760.urdf.xacro"
-        )
-    )
+    launch_arguments.append(DeclareLaunchArgument("robot_model", default_value="lbr_iisy3_r760"))
+    launch_arguments.append(DeclareLaunchArgument("robot_urdf_folder", default_value="kuka_lbr_iisy_support"))
+    launch_arguments.append(DeclareLaunchArgument("robot_urdf_filepath", default_value="/urdf/lbr_iisy3_r760.urdf.xacro"))
+    launch_arguments.append(DeclareLaunchArgument("robot_srdf_folder", default_value="kuka_lbr_iisy_moveit_config"))
+    launch_arguments.append(DeclareLaunchArgument("robot_srdf_filepath", default_value="/urdf/lbr_iisy3_r760.srdf"))
     launch_arguments.append(DeclareLaunchArgument("dof", default_value="6"))
     launch_arguments.append(DeclareLaunchArgument("x", default_value="0"))
     launch_arguments.append(DeclareLaunchArgument("y", default_value="0"))

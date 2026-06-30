@@ -34,10 +34,9 @@
 
 namespace kuka_mock_hardware_interface
 {
-CallbackReturn KukaMockHardwareInterface::on_init(
-  const hardware_interface::HardwareComponentInterfaceParams & params)
+CallbackReturn KukaMockHardwareInterface::on_init(const hardware_interface::HardwareInfo & info_)
 {
-  if (hardware_interface::SystemInterface::on_init(params) != CallbackReturn::SUCCESS)
+  if (hardware_interface::SystemInterface::on_init(info_) != CallbackReturn::SUCCESS)
   {
     return CallbackReturn::ERROR;
   }
@@ -65,16 +64,16 @@ CallbackReturn KukaMockHardwareInterface::on_init(
   };
 
   // check if to create mock command interface for sensor
-  auto it = info.hardware_parameters.find("mock_sensor_commands");
-  if (it != info.hardware_parameters.end())
+  auto it = info_.hardware_parameters.find("mock_sensor_commands");
+  if (it != info_.hardware_parameters.end())
   {
     use_mock_sensor_command_interfaces_ = hardware_interface::parse_bool(it->second);
   }
   else
   {
     // check if fake_sensor_commands was set instead and issue warning.
-    it = info.hardware_parameters.find("fake_sensor_commands");
-    if (it != info.hardware_parameters.end())
+    it = info_.hardware_parameters.find("fake_sensor_commands");
+    if (it != info_.hardware_parameters.end())
     {
       use_mock_sensor_command_interfaces_ = hardware_interface::parse_bool(it->second);
       RCUTILS_LOG_WARN_NAMED(
@@ -89,16 +88,16 @@ CallbackReturn KukaMockHardwareInterface::on_init(
   }
 
   // check if to create mock command interface for gpio
-  it = info.hardware_parameters.find("mock_gpio_commands");
-  if (it != info.hardware_parameters.end())
+  it = info_.hardware_parameters.find("mock_gpio_commands");
+  if (it != info_.hardware_parameters.end())
   {
     use_mock_gpio_command_interfaces_ = hardware_interface::parse_bool(it->second);
   }
   else
   {
     // check if fake_gpio_commands was set instead and issue warning
-    it = info.hardware_parameters.find("fake_gpio_commands");
-    if (it != info.hardware_parameters.end())
+    it = info_.hardware_parameters.find("fake_gpio_commands");
+    if (it != info_.hardware_parameters.end())
     {
       use_mock_gpio_command_interfaces_ = hardware_interface::parse_bool(it->second);
       RCUTILS_LOG_WARN_NAMED(
@@ -114,8 +113,8 @@ CallbackReturn KukaMockHardwareInterface::on_init(
 
   // check if there is parameter that disables commands
   // this way we simulate disconnected driver
-  it = info.hardware_parameters.find("disable_commands");
-  if (it != info.hardware_parameters.end())
+  it = info_.hardware_parameters.find("disable_commands");
+  if (it != info_.hardware_parameters.end())
   {
     command_propagation_disabled_ = hardware_interface::parse_bool(it->second);
   }
@@ -125,8 +124,8 @@ CallbackReturn KukaMockHardwareInterface::on_init(
   }
 
   // check if there is parameter that enables dynamic calculation
-  it = info.hardware_parameters.find("calculate_dynamics");
-  if (it != info.hardware_parameters.end())
+  it = info_ .hardware_parameters.find("calculate_dynamics");
+  if (it != info_.hardware_parameters.end())
   {
     calculate_dynamics_ = hardware_interface::parse_bool(it->second);
   }
@@ -139,20 +138,20 @@ CallbackReturn KukaMockHardwareInterface::on_init(
   position_state_following_offset_ = 0.0;
   custom_interface_with_following_offset_ = "";
 
-  it = info.hardware_parameters.find("position_state_following_offset");
-  if (it != info.hardware_parameters.end())
+  it = info_.hardware_parameters.find("position_state_following_offset");
+  if (it != info_.hardware_parameters.end())
   {
     position_state_following_offset_ = std::stod(it->second);
-    it = info.hardware_parameters.find("custom_interface_with_following_offset");
-    if (it != info.hardware_parameters.end())
+    it = info_.hardware_parameters.find("custom_interface_with_following_offset");
+    if (it != info_.hardware_parameters.end())
     {
       custom_interface_with_following_offset_ = it->second;
     }
   }
 
   // Parse KUKA-specific parameters
-  it = info.hardware_parameters.find("cycle_time_ms");
-  if (it != info.hardware_parameters.end())
+  it = info_.hardware_parameters.find("cycle_time_ms");
+  if (it != info_.hardware_parameters.end())
   {
     cycle_time_nano_ = std::chrono::nanoseconds(std::stoi(it->second) * 1'000'000);
   }
@@ -161,8 +160,8 @@ CallbackReturn KukaMockHardwareInterface::on_init(
     cycle_time_nano_ = std::chrono::nanoseconds(4'000'000);  // Default to 4 ms
   }
 
-  it = info.hardware_parameters.find("roundtrip_time_micro");
-  if (it != info.hardware_parameters.end())
+  it = info_.hardware_parameters.find("roundtrip_time_micro");
+  if (it != info_.hardware_parameters.end())
   {
     roundtrip_time_micro_ = std::stod(it->second);
   }
@@ -175,9 +174,9 @@ CallbackReturn KukaMockHardwareInterface::on_init(
   index_custom_interface_with_following_offset_ = std::numeric_limits<size_t>::max();
 
   // Initialize storage for standard interfaces
-  initialize_storage_vectors(joint_commands_, joint_states_, standard_interfaces_, info.joints);
+  initialize_storage_vectors(joint_commands_, joint_states_, standard_interfaces_, info_.joints);
   // set all values without initial values to 0
-  for (auto i = 0u; i < info.joints.size(); i++)
+  for (auto i = 0u; i < info_.joints.size(); i++)
   {
     for (auto j = 0u; j < standard_interfaces_.size(); j++)
     {
@@ -189,24 +188,24 @@ CallbackReturn KukaMockHardwareInterface::on_init(
   }
 
   // Search for mimic joints
-  for (auto i = 0u; i < info.joints.size(); ++i)
+  for (auto i = 0u; i < info_.joints.size(); ++i)
   {
-    const auto & joint = info.joints.at(i);
+    const auto & joint = info_.joints.at(i);
     if (joint.parameters.find("mimic") != joint.parameters.cend())
     {
       const auto mimicked_joint_it = std::find_if(
-        info.joints.begin(), info.joints.end(),
+        info_.joints.begin(), info_.joints.end(),
         [&mimicked_joint =
-           joint.parameters.at("mimic")](const hardware_interface::ComponentInfo & joint_info)
-        { return joint_info.name == mimicked_joint; });
-      if (mimicked_joint_it == info.joints.cend())
+           joint.parameters.at("mimic")](const hardware_interface::ComponentInfo & joint_info_)
+        { return joint_info_.name == mimicked_joint; });
+      if (mimicked_joint_it == info_.joints.cend())
       {
         throw std::runtime_error(
           std::string("Mimicked joint '") + joint.parameters.at("mimic") + "' not found");
       }
       MimicJoint mimic_joint;
       mimic_joint.joint_index = i;
-      mimic_joint.mimicked_joint_index = std::distance(info.joints.begin(), mimicked_joint_it);
+      mimic_joint.mimicked_joint_index = std::distance(info_.joints.begin(), mimicked_joint_it);
       auto param_it = joint.parameters.find("multiplier");
       if (param_it != joint.parameters.end())
       {
@@ -217,7 +216,7 @@ CallbackReturn KukaMockHardwareInterface::on_init(
   }
 
   // search for non-standard joint interfaces
-  for (const auto & joint : info.joints)
+  for (const auto & joint : info_.joints)
   {
     // populate non-standard command interfaces to other_interfaces_
     populate_non_standard_interfaces(joint.command_interfaces, other_interfaces_);
@@ -227,7 +226,7 @@ CallbackReturn KukaMockHardwareInterface::on_init(
   }
 
   // Initialize storage for non-standard interfaces
-  initialize_storage_vectors(other_commands_, other_states_, other_interfaces_, info.joints);
+  initialize_storage_vectors(other_commands_, other_states_, other_interfaces_, info_.joints);
 
   // when following offset is used on custom interface then find its index
   if (!custom_interface_with_following_offset_.empty())
@@ -252,7 +251,7 @@ CallbackReturn KukaMockHardwareInterface::on_init(
     }
   }
 
-  for (const auto & sensor : info.sensors)
+  for (const auto & sensor : info_.sensors)
   {
     for (const auto & interface : sensor.state_interfaces)
     {
@@ -265,10 +264,10 @@ CallbackReturn KukaMockHardwareInterface::on_init(
     }
   }
   initialize_storage_vectors(
-    sensor_mock_commands_, sensor_states_, sensor_interfaces_, info.sensors);
+    sensor_mock_commands_, sensor_states_, sensor_interfaces_, info_.sensors);
 
   // search for gpio interfaces
-  for (const auto & gpio : info.gpios)
+  for (const auto & gpio : info_.gpios)
   {
     // populate non-standard command interfaces to gpio_interfaces_
     populate_non_standard_interfaces(gpio.command_interfaces, gpio_interfaces_);
@@ -280,12 +279,12 @@ CallbackReturn KukaMockHardwareInterface::on_init(
   // Mock gpio command interfaces
   if (use_mock_gpio_command_interfaces_)
   {
-    initialize_storage_vectors(gpio_mock_commands_, gpio_states_, gpio_interfaces_, info.gpios);
+    initialize_storage_vectors(gpio_mock_commands_, gpio_states_, gpio_interfaces_, info_.gpios);
   }
   // Real gpio command interfaces
   else
   {
-    initialize_storage_vectors(gpio_commands_, gpio_states_, gpio_interfaces_, info.gpios);
+    initialize_storage_vectors(gpio_commands_, gpio_states_, gpio_interfaces_, info_.gpios);
   }
 
   return CallbackReturn::SUCCESS;
@@ -819,22 +818,22 @@ bool KukaMockHardwareInterface::get_interface(
 void KukaMockHardwareInterface::initialize_storage_vectors(
   std::vector<std::vector<double>> & commands, std::vector<std::vector<double>> & states,
   const std::vector<std::string> & interfaces,
-  const std::vector<hardware_interface::ComponentInfo> & component_infos)
+  const std::vector<hardware_interface::ComponentInfo> & component_info_s)
 {
   // Initialize storage for all joints, regardless of their existence
   commands.resize(interfaces.size());
   states.resize(interfaces.size());
   for (auto i = 0u; i < interfaces.size(); i++)
   {
-    commands[i].resize(component_infos.size(), std::numeric_limits<double>::quiet_NaN());
-    states[i].resize(component_infos.size(), std::numeric_limits<double>::quiet_NaN());
+    commands[i].resize(component_info_s.size(), std::numeric_limits<double>::quiet_NaN());
+    states[i].resize(component_info_s.size(), std::numeric_limits<double>::quiet_NaN());
   }
 
   // Initialize with values from URDF
   bool print_hint = false;
-  for (auto i = 0u; i < component_infos.size(); i++)
+  for (auto i = 0u; i < component_info_s.size(); i++)
   {
-    const auto & component = component_infos[i];
+    const auto & component = component_info_s[i];
     for (const auto & interface : component.state_interfaces)
     {
       auto it = std::find(interfaces.begin(), interfaces.end(), interface.name);
